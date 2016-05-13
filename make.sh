@@ -1,2 +1,2 @@
 #!/bin/bash
-cmd ./launch.bat $1.py
+cmd /C launch_fcad.bat scripts/$1.py
