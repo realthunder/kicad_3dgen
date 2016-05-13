@@ -1,0 +1,6 @@
+[submodule "feeds/Connector_Molex"]
+	path = feeds/Connector_Molex
+	url = git@github.com:realthunder/Connector_Molex.feeds.git
+[submodule "feeds/Connectors_Molex"]
+	path = feeds/Connectors_Molex
+	url = git@github.com:realthunder/Connectors_Molex.feeds.git
