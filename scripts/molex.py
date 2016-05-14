@@ -59,6 +59,16 @@ def export(variant, overwrite=False, saveFCStd=False, exportDXF=False):
             .replace('%c','%02d'%pinCount)\
             .replace('%p','%.2f'%pitch)
 
+    settings = { 'align':'' }
+
+    if len(names) > 4:
+        for i in range(4,len(names)):
+            if names[i] == '': continue
+            option = [x for x in names[i].split(':')]
+            if not option[0] in settings:
+                FreeCAD.Console.PrintWarning('unknown setting : ' + option[0] + '\n')
+            else:
+                settings[option[0]] = option[1]
 
     if os.path.isfile(dstName+'.stp'):
         if not overwrite:
@@ -71,6 +81,7 @@ def export(variant, overwrite=False, saveFCStd=False, exportDXF=False):
     guiDoc = Gui.getDocument(newDoc.Name)
 
     bodyCut = newDoc.copyObject(bodyCut,True)
+    FreeCAD.Console.PrintMessage(bodyCut.Name +  '\n')
     guiDoc.getObject(bodyCut.Name).Visibility = False;
 
     ImportGui.insert(srcName,newDoc.Name)
@@ -88,8 +99,19 @@ def export(variant, overwrite=False, saveFCStd=False, exportDXF=False):
         return
     footprint = objs[0]
 
-    placement = bodyCut.Placement
+    # NOTE!!! If we don't use Placement.copy here, we will be getting a surprise
+    # from FreeCAD. Even if we reset the bodyCut.Placement below, whenever we change
+    # the non-copied placement, bodyCut.Placement will get an update, too! Spooky!!
+    # There seems to be some dangling internal reference bug here.
+    placement = bodyCut.Placement.copy()
     bodyCut.Placement = App.Placement()
+
+    offset = (pinCount-2)*pitch/2
+
+    if settings['align'] == 'pin':
+        placement.Base.x += offset
+
+    footprint.Placement = placement.copy()
 
     for obj in bodyCut.Shapes:
         # any better way to id array object?
@@ -97,11 +119,11 @@ def export(variant, overwrite=False, saveFCStd=False, exportDXF=False):
             # TODO, we assum interval x sets the pitch, add more check later
             obj.IntervalX.x = pitch
             obj.NumberX = pinCount
-            obj.Placement.Base.x -= (pinCount-2)*pitch/2
+            obj.Placement.Base.x -= offset
         else:
             for sobj in obj.Shapes:
                 if sobj.TypeId == 'Part::Mirroring':
-                    sobj.Source.Placement.Base.x -= (pinCount-2)*pitch/2
+                    sobj.Source.Placement.Base.x -= offset
 
     newDoc.recompute()
 
@@ -124,7 +146,7 @@ def export(variant, overwrite=False, saveFCStd=False, exportDXF=False):
             newObj.ViewObject.ShapeColor = shaderColors.named_colors[color].getDiffuseFloat()
             if not color in colors:
                 colors.append(color)
-        newObj.Placement = placement
+        newObj.Placement = placement.copy()
         shapes.append(newObj)
         objs.append(expVRML.exportObject(freecad_object = newObj, shape_color=color, face_colors=None))
 
