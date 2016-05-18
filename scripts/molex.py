@@ -20,7 +20,7 @@ import importDXF
 bodyName = 'SOLID'
 fpName = 'COMPOUND'
 
-def export(variant, overwrite=False, saveFCStd=False, exportDXF=False):
+def export(variant, fuse=False, overwrite=False, saveFCStd=False, exportDXF=False):
     partPrefix = variant[:-4]
     partPostfix = variant[5:]
     pinCount = int(variant[5:7])
@@ -154,6 +154,11 @@ def export(variant, overwrite=False, saveFCStd=False, exportDXF=False):
 
     for obj in bodyCut.Shapes:
         make_part(obj,False)
+
+    if fuse:
+        newObj = newDoc.addObject("Part::MultiFuse", 'part')
+        newObj.Shapes = shapes
+        shapes = [newObj]
 
     newDoc.recompute()
 
